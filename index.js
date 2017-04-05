@@ -3,6 +3,7 @@ var mongoose = require('mongoose');
 var app = express()
 var bodyParser = require('body-parser')
 var SharedUser = require('./SharedUser')
+var TimLocation = require('./TimLocation')
 app.use( bodyParser.json() );       // to support JSON-encoded bodies
 app.use(bodyParser.urlencoded({     // to support URL-encoded bodies
   extended: true
@@ -69,14 +70,48 @@ app.post('/enterExit', function (req, res) {
 })
 
 app.get('/sharedUsersLocation', function(req, res) {
-  SharedUser.find({shared: true}).then((users) => {
+  SharedUser.find({shared: true, inDALI: true}).then((users) => {
     res.json(users);
   })
 })
 
+/**
+ Post Tim's current location
+
+ Sample req.body: {
+    location: "OFFICE",
+    enter: true
+  }
+ */
 app.post('/timLocation', function (req, res) {
   console.log(req.body);
-  res.send('Noted');
+  TimLocation.find().then((locations) => {
+    var loc = null;
+    if (locations.length > 0) {
+      loc = locations[0]
+    }else{
+      var loc = new TimLocation({
+        inDALI: false,
+        inOffice: false
+      })
+    }
+    loc.inDALI = req.body.location == "DALI" && req.body.enter
+    loc.inOffice = req.body.location == "OFFICE" && req.body.enter
+
+    loc.save().then((loc) => {
+      res.send('Noted')
+    })
+  })
+})
+
+app.get('/timLocation', function(req, res) {
+  TimLocation.find().then((locations) => {
+    if (locations.length > 0) {
+      res.json(locations[0])
+    }else{
+      res.json({inDALI: false, inOffice: false})
+    }
+  })
 })
 
 app.listen(process.env.PORT, function () {
