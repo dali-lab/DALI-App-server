@@ -38,5 +38,5 @@ app.post('/timLocation', function (req, res) {
 })
 
 app.listen(process.env.PORT, function () {
-  console.log('DALI App Server listening on port 3000!')
+  console.log('DALI App Server listening on port ' + process.env.PORT + '!')
 })
