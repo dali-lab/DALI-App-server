@@ -3,6 +3,7 @@ var mongoose = require('mongoose');
 var app = express()
 var bodyParser = require('body-parser')
 var SharedUser = require('./SharedUser')
+require('dotenv').config()
 var TimLocation = require('./TimLocation')
 app.use( bodyParser.json() );       // to support JSON-encoded bodies
 app.use(bodyParser.urlencoded({     // to support URL-encoded bodies
