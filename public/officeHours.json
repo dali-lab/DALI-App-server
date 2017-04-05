@@ -1,0 +1,25 @@
+[{
+  "name": "Regina",
+  "day": "Wednesday",
+  "start": 19,
+  "end": 21,
+  "skills": [
+    "Photoshop", "Illustrator", "Adobe XD", "Sketch"
+  ]
+}, {
+  "name": "Abby",
+  "day": "Wednesday",
+  "start": 21,
+  "end": 22,
+  "skills": [
+     "web", "js", "React Native", "AfterEffects", "Illustrator", "some Premier Pro"
+  ]
+}, {
+  "name": "Jason",
+  "day": "Wednesday",
+  "start": 21,
+  "end": 24,
+  "skills": [
+    "Web", "db", "git", "terminal"
+  ]
+}]
