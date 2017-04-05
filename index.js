@@ -1,10 +1,14 @@
 var express = require('express')
+var mongoose = require('mongoose');
 var app = express()
 var bodyParser = require('body-parser')
+var SharedUser = require('./SharedUser')
 app.use( bodyParser.json() );       // to support JSON-encoded bodies
 app.use(bodyParser.urlencoded({     // to support URL-encoded bodies
   extended: true
 }));
+mongoose.connect(process.env.DB_URI);
+mongoose.Promise = global.Promise;
 
 app.post('/checkIn', function (req, res) {
   console.log(req.body);
@@ -28,8 +32,46 @@ app.post('/checkIn', function (req, res) {
   }
  */
 app.post('/enterExit', function (req, res) {
-  console.log(req.body);
-  res.send('Noted');
+  SharedUser.find({email: req.body.user.email}).then((users) => {
+    users = users.filter((user) => {
+      return user.email == req.body.user.email
+    })
+
+    if (users.length > 0) {
+      var user = users[0];
+      user.shared = req.body.share
+      // Old to sharing
+      if (req.body.share) {
+        // Still sharing...
+        // So update record
+        user.inDALI = req.body.inDALI
+      }
+
+      user.save().then((user) => {
+        res.send('Noted');
+      })
+    }else if (req.body.share){
+      // New user to sharing
+      var user = new SharedUser({
+        email: req.body.user.email,
+        name: req.body.user.name,
+        inDALI: req.body.inDALI,
+        shared: req.body.share
+      })
+
+      user.save().then((user) => {
+        res.send('Noted');
+      })
+    }
+  }).catch((error) => {
+    res.send(error);
+  })
+})
+
+app.get('/sharedUsersLocation', function(req, res) {
+  SharedUser.find({shared: true}).then((users) => {
+    res.json(users);
+  })
 })
 
 app.post('/timLocation', function (req, res) {
