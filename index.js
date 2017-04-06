@@ -96,8 +96,11 @@ app.post('/timLocation', function (req, res) {
         inOffice: false
       })
     }
-    loc.inDALI = req.body.location == "DALI" && req.body.enter
-    loc.inOffice = req.body.location == "OFFICE" && req.body.enter
+    if (req.body.location == "DALI") {
+      loc.inDALI = req.body.enter
+    }else if (req.body.location == "OFFICE") {
+      loc.inOffice = req.body.enter
+    }
 
     loc.save().then((loc) => {
       res.send('Noted')
