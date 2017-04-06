@@ -1,3 +1,9 @@
+/**
+ TimLocation.js
+
+ Creates and exports a TimLocation mongoose model
+ */
+
 var mongoose = require('mongoose');
 
 var TimLocationSchema = new mongoose.Schema({
@@ -5,6 +11,7 @@ var TimLocationSchema = new mongoose.Schema({
   inOffice: Boolean
 });
 
+// Strips the data I don't want to send, like ids and likewise
 TimLocationSchema.set('toJSON', {
   virtuals: true,
   versionKey:false,

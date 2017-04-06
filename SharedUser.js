@@ -1,3 +1,9 @@
+/**
+ SharedUser.js
+
+ Creates and exports a SharedUser mongoose model
+ */
+
 var mongoose = require('mongoose');
 
 var SharedUserSchema = new mongoose.Schema({
@@ -8,6 +14,7 @@ var SharedUserSchema = new mongoose.Schema({
   shared: Boolean
 });
 
+// Strips the data I don't want to send, like ids and likewise
 SharedUserSchema.set('toJSON', {
   virtuals: true,
   versionKey:false,
