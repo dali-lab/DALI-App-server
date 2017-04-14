@@ -72,6 +72,10 @@ app.post('/checkIn', function (req, res) {
   }
  */
 app.post('/enterExit', function (req, res) {
+  if (req.body.user == undefined || req.body.user.email == undefined || req.body.user.email != "") {
+    res.send("Failed");
+  }
+
   // Getting the user from the db...
   SharedUser.find({email: req.body.user.email}).then((users) => {
     // Make certain I have no extra users
@@ -130,6 +134,14 @@ app.post('/enterExit', function (req, res) {
  */
 app.get('/sharedUsersLocation', function(req, res) {
   SharedUser.find({shared: true, inDALI: true}).then((users) => {
+    users.filter((user) => {
+      return user.email != null
+        && user.name != null
+        && user.inDALI != null
+        && user.shared != null
+        && user.email != ""
+        && user.name != "";
+    });
     res.json(users);
   })
 })
