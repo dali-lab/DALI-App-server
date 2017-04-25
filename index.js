@@ -134,15 +134,14 @@ app.post('/enterExit', function (req, res) {
  */
 app.get('/sharedUsersLocation', function(req, res) {
   SharedUser.find({shared: true, inDALI: true}).then((users) => {
-    users.filter((user) => {
+    res.json(users.filter((user) => {
       return user.email != null
         && user.name != null
         && user.inDALI != null
         && user.shared != null
         && user.email != ""
         && user.name != "";
-    });
-    res.json(users);
+    }));
   })
 })
 
