@@ -46,12 +46,12 @@ router.post('/enterExit', function (req, res) {
 
         if (req.body.inDALI) {
           setInterval(function() {
-            if (user.lastUpdate - new Date() >= 60 * 60 * 60 * 2) {
+            if (user.lastUpdate - new Date() >= 1000 * 60 * 30) {
               // We have received no update since
               user.inDALI = false;
               user.save().then(() => {});
             }
-          }, 60 * 60 * 60 * 2);
+          }, 1000 * 60 * 30);
         }
       }
 
@@ -80,14 +80,6 @@ router.post('/enterExit', function (req, res) {
     console.error("Encountered an error running enterExit!");
     console.error(error);
     res.send(error);
-  });
-});
-
-schedule.scheduleJob('* 2 * * *', function(){
-  resetLocations().then(() => {
-    console.log("Reset data");
-  }).catch((error) => {
-    console.log("Error resetting data: ", error);
   });
 });
 
