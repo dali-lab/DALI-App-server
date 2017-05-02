@@ -11,7 +11,8 @@ var SharedUserSchema = new mongoose.Schema({
   name: String,
   identifier: Number,
   inDALI: Boolean,
-  shared: Boolean
+  shared: Boolean,
+  lastUpdate: Date
 });
 
 // Strips the data I don't want to send, like ids and likewise
