@@ -24,7 +24,7 @@ var TimLocation = require('./TimLocation')
  */
 router.post('/enterExit', function (req, res) {
   if (req.body.user == undefined || req.body.user.email == undefined || req.body.user.email != "") {
-    res.send("Failed");
+    res.status(500).send("Failed, you need a user ");
     return;
   }
 
