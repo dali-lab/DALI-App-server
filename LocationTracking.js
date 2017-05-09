@@ -23,6 +23,7 @@ share: false
 }
 */
 router.post('/enterExit', function (req, res) {
+   console.log(req.body);
    if (req.body.user == undefined || req.body.user.email == undefined || req.body.user.email == "") {
       res.status(500).send("Failed, you need a user object and email: " + JSON.stringify(req.body));
       return;
@@ -100,7 +101,7 @@ router.post('/enterExit', function (req, res) {
 
 function resetLocations() {
    return SharedUser.find().then((users) => {
-      var promises = []
+      var promises = [];
 
       users.forEach((user) => {
          user.inDALI = false;
