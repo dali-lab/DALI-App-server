@@ -63,6 +63,7 @@ router.post('/enterExit', function (req, res) {
          }
 
          user.lastUpdate = new Date();
+         user.name = req.body.user.name;
 
          // Save...
          console.log("Saving user...");
@@ -71,6 +72,7 @@ router.post('/enterExit', function (req, res) {
             res.send('Noted');
          });
       }else if (req.body.share){
+         console.log("New user...");
          // This user is new to sharing. I will create a new record with their data
          var user = new SharedUser({
             email: req.body.user.email,
@@ -81,9 +83,13 @@ router.post('/enterExit', function (req, res) {
          });
 
          // And save...
+         console.log("Saving user...");
          user.save().then((user) => {
+            console.log("Done");
             res.send('Noted');
          });
+      }else{
+         res.send("Noted");
       }
    }).catch((error) => {
       console.error("Encountered an error running enterExit!");
@@ -140,11 +146,10 @@ shared: Bool
 */
 router.get('/shared', function(req, res) {
    SharedUser.find({shared: true, inDALI: true}).then((users) => {
+      console.log(users);
       res.json(users.filter((user) => {
          return user.email != null
          && user.name != null
-         && user.inDALI != null
-         && user.shared != null
          && user.email != ""
          && user.name != "";
       }));
