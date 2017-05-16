@@ -27,6 +27,7 @@ mongoose.connect(process.env.DB_URI);
 mongoose.Promise = global.Promise;
 
 app.use('/location', require('./LocationTracking'));
+app.use('/voting', require('./Voting'));
 
 /**
  Check the passed user into any event going on currently

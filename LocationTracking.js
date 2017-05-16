@@ -3,8 +3,8 @@ var router = express.Router();
 var schedule = require('node-schedule');
 
 // Getting configurations for these data models
-var SharedUser = require('./SharedUser')
-var TimLocation = require('./TimLocation')
+var SharedUser = require('./DBRecords/SharedUser')
+var TimLocation = require('./DBRecords//TimLocation')
 
 /**
 Called upon entering or exiting the DALI lab (and when some settings are changed)
