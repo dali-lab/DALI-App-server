@@ -99,15 +99,35 @@ router.post('/release', function(req, res) {
 })
 
 /**
-* Get
+* Get the current scores of all options
+* Should only be called by Admins
+*
+* Returns:
+* {
+*     event: "The Pitch",
+*     options: [
+*        {name: "Pitch 1", id: 1, score: 21}
+*     ]
+* }
+*
+* Returns null if results are already released for the current event
 */
 router.get('/results/current', function(req, res) {
 
 });
 
 /**
+* Get the final results
 *
+* Basic functionality:
+*  - return JSON.parse(results)
+*
+* Returns:
+* {
+*     event: "The Pitch",
+*     winners: JSON.parse(results) aka [ {name: "Pitch 1", award: "Popular choice"} ]
+* }
 */
 router.get('/results/final', function(req, res) {
-
+   
 });

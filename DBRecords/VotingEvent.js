@@ -24,7 +24,7 @@ var VotingEventSchema = new mongoose.Schema({
    endTime: Date,
    resultsReleased: Boolean,
    options: [{ type: Number, ref: 'VotingEventOption' }],
-   results: String, // This is a JSON string with the winners
+   results: String, // This is a JSON string with the winners = [ {name: "Pitch 1", award: "Popular choice"} ]
 });
 
 // Strips the data I don't want to send, like ids and likewise
