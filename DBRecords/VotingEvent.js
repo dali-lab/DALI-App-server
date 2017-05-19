@@ -11,9 +11,9 @@ var exports = module.exports = {};
 var VotingEventOptionSchema = new mongoose.Schema({
    _id : Number,
    name: String,
-   description: String,
    score: Number
 });
+
 // The actual event data object
 var VotingEventSchema = new mongoose.Schema({
    _id: Number,

@@ -18,8 +18,8 @@ var {VotingEvent, VotingEventOption} = require('./DBRecords/VotingEvent');
 *     name: "The Pitch",
 *     description: "You have now seen many pitches, so now please choose the three that you think showed the most merit in your opinion.",
 *     image: "https://img.evbuc.com/https%3A%2F%2Fcdn.evbuc.com%2Fimages%2F30750478%2F73808776949%2F1%2Foriginal.jpg?w=1000&rect=38%2C0%2C1824%2C912&s=068ff06280148aa18a9075a68ad6e060" (allow this one to not be here, defaulting to this value),
-*     options: [
-*        {name: "Pitch 1", id: 1},
+*     options: [ //STUFF THAT GOES INTO THE EVENTOPTION 
+*        {name: "Pitch 1"},
 *     ],
 *     startTime: Date (allow this one to not be here, defaulting to now),
 *     endTime: Date (allow this one to not be here, defaulting to midnight)
@@ -29,16 +29,6 @@ var {VotingEvent, VotingEventOption} = require('./DBRecords/VotingEvent');
 * resultsReleased: true
 */
 
-//  _id: Number,
-//    name: String,
-//    image: String,
-//    description: String,
-//    startTime: Date,
-//    endTime: Date,
-//    resultsReleased: Boolean,
-//    options: [{ type: Number, ref: 'VotingEventOption' }],
-//    results: String, // This is a JSON string with the winners = [ {name: "Pitch 1", award: "Popular choice"} ]
-// });
 
 router.post('/create', function (req, res) {
    if (req.body.name == undefined || req.body.name == "" || req.body.description == undefined || req.body.description == "" || req.body.options == undefined || !Array.isArray(req.body.options)) {
@@ -52,12 +42,15 @@ router.post('/create', function (req, res) {
       return;
    }
 
-   var eventOption = new VotingEvent({
-      _id : req.body.options.id,
-      name: req.body.name,
-      description: req.body.description,
-      score: 0 //initially set score to 0
-   });
+   //loop through req.body.options and create votingEventOptions objects
+   var votingEventOptions = req.body.options.map((option) => {
+      new VotingEventOption({
+         //_id: //fairly certain mongoose generates own _id. Do we save this into DB?
+         //Or store evenOption into event.options and just save events.options?
+         name: option.name,
+         score: 0
+      });
+   })
 
    var event = new VotingEvent({
       name: req.body.name,
@@ -66,17 +59,25 @@ router.post('/create', function (req, res) {
       startTime: req.body.startTime,
       endTime: req.body.endTime,
       resultsReleased: false,
-      options: [{ type: req.body.options.id, ref: eventOption }]
-
+      options: votingEventOptions
    });
 
+   event.save(function(err, createdEvent){
+      if(err){
+         res.send(err);
+      }
+      console.log("event saved.");
+   })
 });
 
 /**
 * Returns the event object whos start time is before now and end time is after now.
 */
 router.get('/current', function(req, res) {
-
+   //check date
+   //if event in valid date
+   //strip start/end time, scores before returning to client
+   //return event
 });
 
 /**
