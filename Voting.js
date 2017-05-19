@@ -98,7 +98,6 @@ router.post('/create', function (req, res) {
       // And we're done
       event.save().then((event) => {
          console.log("New event created!");
-         console.log(event);
          res.send("Complete");
       }).catch((error) => {
          console.log(error);
@@ -115,10 +114,8 @@ router.post('/create', function (req, res) {
 */
 router.get('/current', function(req, res) {
    const now = Date();
-   //{ startTime: {$lt: now}, endTime: {$gt: now} }
-   VotingEvent.find().then((results) => {
+   VotingEvent.find({ startTime: {$lt: now}, endTime: {$gt: now} }).then((results) => {
       if (results != null && results.length > 0) {
-         console.log(results);
          var event = results[0];
          delete event.startTime;
          delete event.endTime;
