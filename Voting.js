@@ -113,32 +113,63 @@ router.post('/create', function (req, res) {
 * Returns the event object whos start time is before now and end time is after now.
 */
 router.get('/current', function(req, res) {
-   const now = Date();
-   VotingEvent.find({ startTime: {$lt: now}, endTime: {$gt: now} }).then((results) => {
-      if (results != null && results.length > 0) {
-         var event = results[0];
-         event.startTime = undefined;
-         event.endTime = undefined;
-         var options = [];
-         var promises = [];
-         event.options.forEach((optionID) => {
-            promises.push(new Promise(function(resolve, reject) {
-               VotingEventOption.findById(optionID).then((option) => {
-                  option.score = undefined;
-                  options.push(option);
-                  resolve();
-               });
-            }));
-         });
-         Promise.all(promises).then(() => {
-            event.options = options;
-            res.json(event);
-         });
-      }else{
+   getCurrentEvent().then((event) => {
+      if (event == null) {
          res.json("No data");
+         return;
       }
+
+      event.startTime = undefined;
+      event.endTime = undefined;
+      event.options.forEach((option) => {
+         option.score = undefined;
+      });
+
+      res.json(event);
    });
 });
+
+function getCurrentEvent() {
+   return new Promise(function(resolve, reject) {
+      const now = Date();
+      VotingEvent.find({ startTime: {$lt: now}, endTime: {$gt: now} }).then((results) => {
+         if (results != null && results.length > 0) {
+            var event = results[0];
+            var options = [];
+            var promises = [];
+            event.options.forEach((optionID) => {
+               promises.push(new Promise(function(success, failure) {
+                  VotingEventOption.findById(optionID).then((option) => {
+                     if (option == null) {
+                        // Failed to find this option, so something broke.
+                        // I will attempt to recover
+                        console.log("Discovered broken link! Recovering...");
+                        var i = event.options.indexOf(optionID);
+                        if (i >= 0) {
+                           event.options.splice(i, 1);
+                           event.save().then(() => {
+                              console.log("Fixed broken link");
+                           }).catch((error) => {
+                              console.error("Failed to recover! ", error);
+                           });
+                        }
+                        return;
+                     }
+                     options.push(option);
+                     success();
+                  });
+               }));
+            });
+            Promise.all(promises).then(() => {
+               event.options = options;
+               resolve(event);
+            });
+         }else{
+            resolve(null);
+         }
+      });
+   });
+}
 
 /**
 * Makes note of a user's votes, adding the appropriate score to each VotingEventOption object
@@ -173,10 +204,9 @@ router.post('/submit', function(req, res) {
       return;
    }
 
-   function score(option, score) {
+   function score(option, score, id) {
       if (option == null) {
-         res.status(404).send("First vote option not found!");
-         return null;
+         throw {message: "Vote option not found! " + id, code: 404}
       }
 
       option.score += score;
@@ -184,25 +214,19 @@ router.post('/submit', function(req, res) {
    }
 
    VotingEventOption.findById(first).then((option) => {
-      let val = score(option, 3);
-      if (val == null) return;
-      return val;
+      return score(option, 3, first);
    }).then(() => {
       return VotingEventOption.findById(second);
    }).then((option) => {
-      let val = score(option, 2);
-      if (val == null) return;
-      return val;
+      return score(option, 2, second);
    }).then(() => {
       return VotingEventOption.findById(third);
    }).then((option) => {
-      let val = score(option, 1);
-      if (val == null) return;
-      return val;
+      return score(option, 1, third);
    }).then(() => {
       res.send("Complete");
    }).catch((error) => {
-      res.status(500).send(error);
+      res.status(error.code || 500).send(error.message);
    });
 });
 
@@ -224,8 +248,8 @@ router.post('/submit', function(req, res) {
 *
 */
 router.post('/release', function(req, res) {
-
-})
+   
+});
 
 /**
 * Get the current scores of all options
@@ -233,7 +257,6 @@ router.post('/release', function(req, res) {
 *
 * Returns:
 * {
-*     event: "The Pitch",
 *     options: [
 *        {name: "Pitch 1", id: 1, score: 21}
 *     ]
@@ -242,7 +265,17 @@ router.post('/release', function(req, res) {
 * Returns null if results are already released for the current event
 */
 router.get('/results/current', function(req, res) {
+   getCurrentEvent().then((event) => {
+      if (event == null) {
+         res.json("No data");
+         return;
+      }
 
+      event.startTime = undefined;
+      event.endTime = undefined;
+
+      res.json(event);
+   });
 });
 
 /**
