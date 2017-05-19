@@ -29,12 +29,13 @@ var VotingEventSchema = new mongoose.Schema({
 VotingEventSchema.set('toJSON', {
    virtuals: true,
    versionKey: false,
-   transform: function (doc, ret) { delete ret._id; delete ret.id }
+   transform: function (doc, ret) { delete ret._id; }
 });
 // Strips data we don't need
 VotingEventOptionSchema.set('toJSON', {
    virtuals: true,
    versionKey: false,
+   transform: function (doc, ret) { delete ret._id; }
 });
 
 // Export

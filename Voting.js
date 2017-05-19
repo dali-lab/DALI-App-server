@@ -117,11 +117,23 @@ router.get('/current', function(req, res) {
    VotingEvent.find({ startTime: {$lt: now}, endTime: {$gt: now} }).then((results) => {
       if (results != null && results.length > 0) {
          var event = results[0];
-         delete event.startTime;
-         delete event.endTime;
-
-         console.log(event);
-         res.json(event);
+         event.startTime = undefined;
+         event.endTime = undefined;
+         var options = [];
+         var promises = [];
+         event.options.forEach((optionID) => {
+            promises.push(new Promise(function(resolve, reject) {
+               VotingEventOption.findById(optionID).then((option) => {
+                  option.score = undefined;
+                  options.push(option);
+                  resolve();
+               });
+            }));
+         });
+         Promise.all(promises).then(() => {
+            event.options = options;
+            res.json(event);
+         });
       }else{
          res.json("No data");
       }
@@ -133,10 +145,10 @@ router.get('/current', function(req, res) {
 *
 * Parameters:
 * {
-*     event: 1, (id)
-*     first: 32, (option id)
-*     second: 21, (option id)
-*     third: 3, (option id)
+*     event: 591f43fa1afecb535cbcc394,
+*     first: 591f43f91afecb535cbcc390,
+*     second: 591f43f91afecb535cbcc392,
+*     third: 591f43f91afecb535cbcc391,
 *     user: "john.kotz@dali.dartmouth.edu" (optional value)
 * }
 *
