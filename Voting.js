@@ -28,6 +28,18 @@ var {VotingEvent, VotingEventOption} = require('./DBRecords/VotingEvent');
 * Should also add the following values:
 * resultsReleased: true
 */
+
+//  _id: Number,
+//    name: String,
+//    image: String,
+//    description: String,
+//    startTime: Date,
+//    endTime: Date,
+//    resultsReleased: Boolean,
+//    options: [{ type: Number, ref: 'VotingEventOption' }],
+//    results: String, // This is a JSON string with the winners = [ {name: "Pitch 1", award: "Popular choice"} ]
+// });
+
 router.post('/create', function (req, res) {
    if (req.body.name == undefined || req.body.name == "" || req.body.description == undefined || req.body.description == "" || req.body.options == undefined || !Array.isArray(req.body.options)) {
       res.status(500).send("Failed. Invalid data! " + JSON.stringify(req.body));
@@ -40,7 +52,23 @@ router.post('/create', function (req, res) {
       return;
    }
 
-   var event = new VotingEvent();
+   var eventOption = new VotingEvent({
+      _id : req.body.options.id,
+      name: req.body.name,
+      description: req.body.description,
+      score: 0 //initially set score to 0
+   });
+
+   var event = new VotingEvent({
+      name: req.body.name,
+      image: req.body.image,
+      description: req.body.description,
+      startTime: req.body.startTime,
+      endTime: req.body.endTime,
+      resultsReleased: false,
+      options: [{ type: req.body.options.id, ref: eventOption }]
+
+   });
 
 });
 
