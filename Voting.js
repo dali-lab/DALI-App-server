@@ -20,8 +20,8 @@ var {VotingEvent, VotingEventOption} = require('./DBRecords/VotingEvent');
 *     image: "https://img.evbuc.com/https%3A%2F%2Fcdn.evbuc.com%2Fimages%2F30750478%2F73808776949%2F1%2Foriginal.jpg?w=1000&rect=38%2C0%2C1824%2C912&s=068ff06280148aa18a9075a68ad6e060"
 *        (allow this one to not be here, defaulting to this value),
 *     options: [ //STUFF THAT GOES INTO THE EVENTOPTION
-*        {name: "Pitch 1"},
-*        {name: "Pitch 2"},
+*        "Pitch 1",
+*        "Pitch 2",
 *     ],
 *     startTime: Date (allow this one to not be here, defaulting to now),
 *     endTime: Date (allow this one to not be here, defaulting to midnight)
@@ -34,7 +34,12 @@ var {VotingEvent, VotingEventOption} = require('./DBRecords/VotingEvent');
 
 router.post('/create', function (req, res) {
    if (req.body.name == undefined || req.body.name == "" || req.body.description == undefined || req.body.description == "" || req.body.options == undefined || !Array.isArray(req.body.options)) {
-      res.status(500).send("Failed. Invalid data! " + JSON.stringify(req.body));
+      res.status(400).send("Failed. Invalid data! " + JSON.stringify(req.body));
+      return;
+   }
+
+   if (req.body.options.length <= 3) {
+      res.status(400).send("Need more than 3 options");
       return;
    }
 
@@ -45,41 +50,69 @@ router.post('/create', function (req, res) {
    }
 
    //loop through req.body.options and create votingEventOptions objects
+   var optionsSavePromises = [];
    var votingEventOptions = req.body.options.map((option) => {
-      new VotingEventOption({
+      option = new VotingEventOption({
          //_id: //fairly certain mongoose generates own _id. Do we save this into DB?
          //Or store evenOption into event.options and just save events.options?
-         name: option.name,
+         // Yeah, I realized it doesn't autogen with numbered ids, so I switched back
+         name: option,
          score: 0
       });
-   })
 
-   var event = new VotingEvent({
-      name: req.body.name,
-      image: req.body.image,
-      description: req.body.description,
-      startTime: req.body.startTime,
-      endTime: req.body.endTime,
-      resultsReleased: false,
-      options: votingEventOptions
+      optionsSavePromises.push(option.save());
+      return option;
    });
 
-   event.save(function(err, createdEvent){
-      if(err){
-         res.send(err);
-      }
-      console.log("event saved.");
-   })
+   // To make sure they are all saved before we continue...
+   Promise.all(optionsSavePromises).then(() => {
+
+      // Create the event
+      var event = new VotingEvent({
+         name: req.body.name,
+         image: req.body.image,
+         description: req.body.description,
+         startTime: new Date(req.body.startTime),
+         endTime: new Date(req.body.endTime),
+         resultsReleased: false,
+         options: votingEventOptions,
+         results: []
+      });
+
+      // And we're done
+      event.save().then((event) => {
+         console.log("New event created!");
+         console.log(event);
+         res.send("Complete");
+      }).catch((error) => {
+         console.log(error);
+         res.status(500).send(error);
+      });
+   }).catch((error) => {
+      console.log(error);
+      res.status(500).send(error);
+   });
 });
 
 /**
 * Returns the event object whos start time is before now and end time is after now.
 */
 router.get('/current', function(req, res) {
-   //check date
-   //if event in valid date
-   //strip start/end time, scores before returning to client
-   //return event
+   const now = Date();
+   //{ startTime: {$lt: now}, endTime: {$gt: now} }
+   VotingEvent.find().then((results) => {
+      if (results != null && results.length > 0) {
+         console.log(results);
+         var event = results[0];
+         delete event.startTime;
+         delete event.endTime;
+
+         console.log(event);
+         res.json(event);
+      }else{
+         res.json("No data");
+      }
+   });
 });
 
 /**

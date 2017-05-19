@@ -9,22 +9,20 @@ var exports = module.exports = {};
 
 // An option for voting
 var VotingEventOptionSchema = new mongoose.Schema({
-   _id : Number,
    name: String,
    score: Number
 });
 
 // The actual event data object
 var VotingEventSchema = new mongoose.Schema({
-   _id: Number,
-   name: String,
+   name: { type: String, required: true },
    image: String,
-   description: String,
-   startTime: Date,
-   endTime: Date,
-   resultsReleased: Boolean,
-   options: [{ type: Number, ref: 'VotingEventOption' }],
-   results: String, // This is a JSON string with the winners = [ {name: "Pitch 1", award: "Popular choice"} ]
+   description: { type: String, required: true},
+   startTime: { type: Date, required: true},
+   endTime: { type: Date, required: true},
+   resultsReleased: { type: Boolean, required: true},
+   options: [{ type: mongoose.Schema.Types.ObjectId, ref: 'VotingEventOption' }],
+   results: [{ name: String, award: String }], // [ {name: "Pitch 1", award: "Popular choice"} ]
 });
 
 // Strips the data I don't want to send, like ids and likewise
