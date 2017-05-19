@@ -163,7 +163,47 @@ router.get('/current', function(req, res) {
 * - 3rd choice: 1 point
 */
 router.post('/submit', function(req, res) {
+   const first = req.body.first;
+   const second = req.body.second;
+   const third = req.body.third;
+   const user = req.body.user;
 
+   if (first == null || first == "" || second == null || second == "" || third == null || third == "") {
+      res.status(400).send("Failed! One of them is missing!");
+      return;
+   }
+
+   function score(option, score) {
+      if (option == null) {
+         res.status(404).send("First vote option not found!");
+         return null;
+      }
+
+      option.score += score;
+      return option.save();
+   }
+
+   VotingEventOption.findById(first).then((option) => {
+      let val = score(option, 3);
+      if (val == null) return;
+      return val;
+   }).then(() => {
+      return VotingEventOption.findById(second);
+   }).then((option) => {
+      let val = score(option, 2);
+      if (val == null) return;
+      return val;
+   }).then(() => {
+      return VotingEventOption.findById(third);
+   }).then((option) => {
+      let val = score(option, 1);
+      if (val == null) return;
+      return val;
+   }).then(() => {
+      res.send("Complete");
+   }).catch((error) => {
+      res.status(500).send(error);
+   });
 });
 
 /**
