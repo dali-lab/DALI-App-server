@@ -131,3 +131,5 @@ router.get('/results/current', function(req, res) {
 router.get('/results/final', function(req, res) {
    
 });
+
+module.exports = router;
