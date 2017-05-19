@@ -44,8 +44,8 @@ router.post('/create', function (req, res) {
    }
 
    // This should be in all of them
-   if (req.body.API_KEY != process.env.API_KEY) {
-      res.status(403).status("Unauthorized request. This method can only be called from the DALI Lab iOS or Android app");
+   if (req.query.key != process.env.API_KEY) {
+      res.status(403).send("Unauthorized request. This method can only be called from the DALI Lab iOS or Android app");
       return;
    }
 
@@ -113,10 +113,11 @@ router.post('/create', function (req, res) {
 * Returns the event object whos start time is before now and end time is after now.
 */
 router.get('/current', function(req, res) {
-   if (req.body.API_KEY != process.env.API_KEY) {
-      res.status(403).status("Unauthorized request. This method can only be called from the DALI Lab iOS or Android app");
+   if (req.query.key != process.env.API_KEY) {
+      res.status(403).send("Unauthorized request. This method can only be called from the DALI Lab iOS or Android app");
       return;
    }
+   console.log("Got here...");
 
    getCurrentEvent().then((event) => {
       if (event == null) {
@@ -199,8 +200,8 @@ function getCurrentEvent() {
 * - 3rd choice: 1 point
 */
 router.post('/submit', function(req, res) {
-   if (req.body.API_KEY != process.env.API_KEY) {
-      res.status(403).status("Unauthorized request. This method can only be called from the DALI Lab iOS or Android app");
+   if (req.query.key != process.env.API_KEY) {
+      res.status(403).send("Unauthorized request. This method can only be called from the DALI Lab iOS or Android app");
       return;
    }
 
@@ -258,8 +259,8 @@ router.post('/submit', function(req, res) {
 *
 */
 router.post('/release', function(req, res) {
-   if (req.body.API_KEY != process.env.API_KEY) {
-      res.status(403).status("Unauthorized request. This method can only be called from the DALI Lab iOS or Android app");
+   if (req.query.key != process.env.API_KEY) {
+      res.status(403).send("Unauthorized request. This method can only be called from the DALI Lab iOS or Android app");
       return;
    }
 
@@ -279,8 +280,8 @@ router.post('/release', function(req, res) {
 * Returns null if results are already released for the current event
 */
 router.get('/results/current', function(req, res) {
-   if (req.body.API_KEY != process.env.API_KEY) {
-      res.status(403).status("Unauthorized request. This method can only be called from the DALI Lab iOS or Android app");
+   if (req.query.key != process.env.API_KEY) {
+      res.status(403).send("Unauthorized request. This method can only be called from the DALI Lab iOS or Android app");
       return;
    }
 
@@ -310,8 +311,8 @@ router.get('/results/current', function(req, res) {
 * }
 */
 router.get('/results/final', function(req, res) {
-   if (req.body.API_KEY != process.env.API_KEY) {
-      res.status(403).status("Unauthorized request. This method can only be called from the DALI Lab iOS or Android app");
+   if (req.query.key != process.env.API_KEY) {
+      res.status(403).send("Unauthorized request. This method can only be called from the DALI Lab iOS or Android app");
       return;
    }
 
