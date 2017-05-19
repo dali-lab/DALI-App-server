@@ -8,7 +8,7 @@ var express = require('express');
 var router = express.Router();
 
 // Getting configurations for these data models
-var {VotingEvent, VotingEventOption} = require('./DBRecords/VotingEvent');
+var {VoteLog, VotingEvent, VotingEventOption} = require('./DBRecords/VotingEvent');
 
 /**
 * Creates a event and saves it
@@ -33,6 +33,11 @@ var {VotingEvent, VotingEventOption} = require('./DBRecords/VotingEvent');
 
 
 router.post('/create', function (req, res) {
+   if (req.query.key != process.env.API_KEY) {
+      res.status(403).send("Unauthorized request. This method can only be called from the DALI Lab iOS or Android app");
+      return;
+   }
+
    if (req.body.name == undefined || req.body.name == "" || req.body.description == undefined || req.body.description == "" || req.body.options == undefined || !Array.isArray(req.body.options)) {
       res.status(400).send("Failed. Invalid data! " + JSON.stringify(req.body));
       return;
@@ -40,12 +45,6 @@ router.post('/create', function (req, res) {
 
    if (req.body.options.length <= 3) {
       res.status(400).send("Need more than 3 options");
-      return;
-   }
-
-   // This should be in all of them
-   if (req.query.key != process.env.API_KEY) {
-      res.status(403).send("Unauthorized request. This method can only be called from the DALI Lab iOS or Android app");
       return;
    }
 
@@ -73,7 +72,8 @@ router.post('/create', function (req, res) {
          //Or store evenOption into event.options and just save events.options?
          // Yeah, I realized it doesn't autogen with numbered ids, so I switched back
          name: option,
-         score: 0
+         score: 0,
+         award: null
       });
 
       optionsSavePromises.push(option.save());
@@ -129,6 +129,7 @@ router.get('/current', function(req, res) {
       event.endTime = undefined;
       event.options.forEach((option) => {
          option.score = undefined;
+         option.award = undefined;
       });
 
       res.json(event);
@@ -205,39 +206,78 @@ router.post('/submit', function(req, res) {
       return;
    }
 
-   const first = req.body.first;
-   const second = req.body.second;
-   const third = req.body.third;
-   const user = req.body.user;
-
-   if (first == null || first == "" || second == null || second == "" || third == null || third == "") {
-      res.status(400).send("Failed! One of them is missing!");
+   const eventID = req.body.event;
+   if (eventID == null || eventID == "") {
+      res.status(400).send("Failed! You must include the id of the event");
       return;
    }
 
-   function score(option, score, id) {
-      if (option == null) {
-         throw {message: "Vote option not found! " + id, code: 404}
+   VoteLog.find({ ip: req.ip }).then((logs) => {
+      if (logs.length > 0) {
+         res.status(403).send("You can only vote once!");
+         return;
       }
 
-      option.score += score;
-      return option.save();
-   }
+      VotingEvent.findById(eventID).then((event) => {
+         if (event == null) {
+            res.status(404).send("Event not found");
+            return;
+         }
+         if (event.resultsReleased) {
+            res.status(400).send("Event is no longer accepting votes");
+            return;
+         }
 
-   VotingEventOption.findById(first).then((option) => {
-      return score(option, 3, first);
-   }).then(() => {
-      return VotingEventOption.findById(second);
-   }).then((option) => {
-      return score(option, 2, second);
-   }).then(() => {
-      return VotingEventOption.findById(third);
-   }).then((option) => {
-      return score(option, 1, third);
-   }).then(() => {
-      res.send("Complete");
-   }).catch((error) => {
-      res.status(error.code || 500).send(error.message);
+         const first = req.body.first;
+         const second = req.body.second;
+         const third = req.body.third;
+         const user = req.body.user;
+
+         if (first == null || first == "" || second == null || second == "" || third == null || third == "") {
+            res.status(400).send("Failed! One of them is missing!");
+            return;
+         }
+
+         var voteLog = new VoteLog({
+            event: event,
+            first: null,
+            second: null,
+            third: null,
+            user: user,
+            ip: req.ip
+         });
+
+         function score(option, score, id) {
+            if (option == null) {
+               throw {message: "Vote option not found! " + id, code: 404}
+            }
+
+            option.score += score;
+            return option.save();
+         }
+
+         VotingEventOption.findById(first).then((option) => {
+            voteLog.first = option;
+            return score(option, 3, first);
+         }).then(() => {
+            return VotingEventOption.findById(second);
+         }).then((option) => {
+            voteLog.second = option;
+            return score(option, 2, second);
+         }).then(() => {
+            return VotingEventOption.findById(third);
+         }).then((option) => {
+            voteLog.third = option;
+            return score(option, 1, third);
+         }).then(() => {
+            res.send("Complete");
+            voteLog.save().then(() => {
+               console.log("Saved vote log");
+            });
+         }).catch((error) => {
+            res.status(error.code || 500).send(error.message);
+         });
+      });
    });
 });
 
@@ -248,14 +288,14 @@ router.post('/submit', function(req, res) {
 * {
 *     event: 1, (id)
 *     winners: [
-*        {name: "Pitch 1", award: "Popular choice"},
-*        {name: "Pitch 2", award: "DALI award"}
+*        {award: "Popular choice", id: kasjf;klsa jfl;kjaskld},
+*        {award: "DALI award", id: kasjf;klsa jfl;kjaskld}
 *     ],
 * }
 *
 * Functionality:
 *  - Set resultsReleased to be true
-*  - Set results to be JSON.stringify(winners)
+*  - Set results to be winners
 *
 */
 router.post('/release', function(req, res) {
@@ -264,6 +304,61 @@ router.post('/release', function(req, res) {
       return;
    }
 
+   if (req.body.event == null || req.body.event == "" || req.body.winners == null || !Array.isArray(req.body.winners)) {
+      res.status(400).send("Invalid data!");
+      return;
+   }
+
+   if (req.body.winners.length < 1) {
+      res.status(400).send("You need at least one winner!");
+      return;
+   }
+
+   const eventID = req.body.event;
+   const winnersObjs = req.body.winners;
+
+   VotingEvent.findById(eventID).then((event) => {
+      if (event == null) {
+         res.status(404).send("Failed to find event!");
+         return;
+      }
+
+      if (event.resultsReleased) {
+         res.status(400).send("Event has already released results");
+         return;
+      }
+
+      event.resultsReleased = true;
+
+      var promises = [];
+      winnersObjs.forEach((winnerObj) => {
+         promises.push(
+            new Promise(function(resolve, reject) {
+               VotingEventOption.findById(winnerObj.id).then((winner) => {
+                  if (winner == null) {
+                     reject({code: 404, message: "Failed to find opton: " + winnerObj.id});
+                  }
+                  winner.award = winnerObj.award;
+                  winner.save().then(resolve);
+               }).catch((error) => {
+                  reject({ code: 500, mesage: error});
+               });
+            })
+         );
+      });
+
+      Promise.all(promises).then(() => {
+         event.save().then(() => {
+            res.send("Complete");
+         });
+      }).catch((error) => {
+         if (error.code == 404) {
+            res.status(error.code).send(error.message);
+         }else{
+            res.status(500).send(error);
+         }
+      })
+   });
 });
 
 /**
@@ -293,6 +388,9 @@ router.get('/results/current', function(req, res) {
 
       event.startTime = undefined;
       event.endTime = undefined;
+      event.options.forEach((option) => {
+         option.award = undefined;
+      });
 
       res.json(event);
    });
@@ -305,10 +403,10 @@ router.get('/results/current', function(req, res) {
 *  - return JSON.parse(results)
 *
 * Returns:
-* {
-*     event: "The Pitch",
-*     winners: JSON.parse(results) aka [ {name: "Pitch 1", award: "Popular choice"} ]
-* }
+* [
+*   {name: "Pitch 1", award: "Popular choice"},
+*   {name: "Pitch 2", award: "DALI award"},
+* ]
 */
 router.get('/results/final', function(req, res) {
    if (req.query.key != process.env.API_KEY) {
@@ -316,6 +414,70 @@ router.get('/results/final', function(req, res) {
       return;
    }
 
+   var eventID = req.query.id;
+   function getQuery() {
+      if (eventID == null || eventID == "") {
+         return VotingEvent.find({ startTime: {$lt: new Date()}, endTime: {$gt: new Date()} }).then((events) => {
+            return new Promise(function(resolve, reject) {
+               if (events == null) {
+                  resolve(null);
+                  return;
+               }
+               resolve(events[0]);
+            });
+         });
+      }else{
+         VotingEvent.findById(eventID)
+      }
+   }
+
+   getQuery().then((event) => {
+      if (event == null) {
+         res.status(404).send("Event not found");
+         return;
+      }
+
+      if (!event.resultsReleased) {
+         res.status(400).send("Event has not released results yet!");
+         return;
+      }
+
+      var errors = [];
+      var options = [];
+      var promises = [];
+      event.options.forEach((optionID) => {
+         promises.push(new Promise(function(resolve, reject) {
+            VotingEventOption.findById(optionID).then((option) => {
+               if (option == null) {
+                  errors.push(optionID);
+                  return;
+               }
+
+               option.score = undefined;
+               if (option.award != null) {
+                  options.push(option);
+               }
+               resolve();
+            });
+         }));
+      });
+
+      Promise.all(promises).then(() => {
+         if (errors.length > 0) {
+            errors.forEach((errorID) => {
+               var i = event.options.indexOf(errorID);
+               if (i >= 0) {
+                  event.options.splice(i, 1);
+               }
+            });
+            event.save().then(() => {
+               console.log("Cleaned up " + errors.length + " broken links", errors);
+            });
+         }
+
+         res.json(options);
+      });
+   });
 });
 
 module.exports = router;

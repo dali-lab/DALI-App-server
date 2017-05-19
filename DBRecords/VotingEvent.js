@@ -8,9 +8,20 @@ var mongoose = require('mongoose');
 var exports = module.exports = {};
 
 // An option for voting
+var VoteLogSchema = new mongoose.Schema({
+   event: { type: mongoose.Schema.Types.ObjectId, ref: 'VotingEvent', required: true },
+   first: { type: mongoose.Schema.Types.ObjectId, ref: 'VotingEventOption', required: true },
+   second: { type: mongoose.Schema.Types.ObjectId, ref: 'VotingEventOption', required: true },
+   third: { type: mongoose.Schema.Types.ObjectId, ref: 'VotingEventOption', required: true },
+   user: String,
+   ip: { type: String, required: true }
+});
+
+// An option for voting
 var VotingEventOptionSchema = new mongoose.Schema({
    name: String,
-   score: Number
+   score: Number,
+   award: String
 });
 
 // The actual event data object
@@ -22,7 +33,6 @@ var VotingEventSchema = new mongoose.Schema({
    endTime: { type: Date, required: true},
    resultsReleased: { type: Boolean, required: true},
    options: [{ type: mongoose.Schema.Types.ObjectId, ref: 'VotingEventOption' }],
-   results: [{ name: String, award: String }], // [ {name: "Pitch 1", award: "Popular choice"} ]
 });
 
 // Strips the data I don't want to send, like ids and likewise
@@ -38,7 +48,14 @@ VotingEventOptionSchema.set('toJSON', {
    transform: function (doc, ret) { delete ret._id; }
 });
 
+VoteLogSchema.set('toJSON', {
+   virtuals: true,
+   versionKey: false,
+   transform: function(doc, ret) { delete ret._id; }
+});
+
 // Export
+exports.VoteLog = mongoose.model('VoteLog', VoteLogSchema);
 exports.VotingEvent = mongoose.model('VotingEvent', VotingEventSchema);
 exports.VotingEventOption = mongoose.model('VotingEventOption', VotingEventOptionSchema);
 
