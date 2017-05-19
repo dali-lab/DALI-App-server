@@ -49,6 +49,22 @@ router.post('/create', function (req, res) {
       return;
    }
 
+   var startTime = new Date()
+   var endTime = new Date()
+   endTime.setHours(23, 59, 59);
+
+   if (req.body.startTime != null) {
+      startTime = new Date(req.body.startTime);
+   }
+   if (req.body.endTime != null) {
+      endTime = new Date(req.body.endTime);
+   }
+
+   if (endTime <= startTime) {
+      res.status(400).send("End time must be later than start time!");
+      return;
+   }
+
    //loop through req.body.options and create votingEventOptions objects
    var optionsSavePromises = [];
    var votingEventOptions = req.body.options.map((option) => {
@@ -70,10 +86,10 @@ router.post('/create', function (req, res) {
       // Create the event
       var event = new VotingEvent({
          name: req.body.name,
-         image: req.body.image,
+         image: req.body.image || "https://img.evbuc.com/https%3A%2F%2Fcdn.evbuc.com%2Fimages%2F30750478%2F73808776949%2F1%2Foriginal.jpg?w=1000&rect=38%2C0%2C1824%2C912&s=068ff06280148aa18a9075a68ad6e060",
          description: req.body.description,
-         startTime: new Date(req.body.startTime),
-         endTime: new Date(req.body.endTime),
+         startTime: startTime,
+         endTime: endTime,
          resultsReleased: false,
          options: votingEventOptions,
          results: []
