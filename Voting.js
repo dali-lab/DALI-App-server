@@ -17,9 +17,11 @@ var {VotingEvent, VotingEventOption} = require('./DBRecords/VotingEvent');
 * {
 *     name: "The Pitch",
 *     description: "You have now seen many pitches, so now please choose the three that you think showed the most merit in your opinion.",
-*     image: "https://img.evbuc.com/https%3A%2F%2Fcdn.evbuc.com%2Fimages%2F30750478%2F73808776949%2F1%2Foriginal.jpg?w=1000&rect=38%2C0%2C1824%2C912&s=068ff06280148aa18a9075a68ad6e060" (allow this one to not be here, defaulting to this value),
-*     options: [ //STUFF THAT GOES INTO THE EVENTOPTION 
+*     image: "https://img.evbuc.com/https%3A%2F%2Fcdn.evbuc.com%2Fimages%2F30750478%2F73808776949%2F1%2Foriginal.jpg?w=1000&rect=38%2C0%2C1824%2C912&s=068ff06280148aa18a9075a68ad6e060"
+*        (allow this one to not be here, defaulting to this value),
+*     options: [ //STUFF THAT GOES INTO THE EVENTOPTION
 *        {name: "Pitch 1"},
+*        {name: "Pitch 2"},
 *     ],
 *     startTime: Date (allow this one to not be here, defaulting to now),
 *     endTime: Date (allow this one to not be here, defaulting to midnight)
@@ -158,7 +160,7 @@ router.get('/results/current', function(req, res) {
 * }
 */
 router.get('/results/final', function(req, res) {
-   
+
 });
 
 module.exports = router;
