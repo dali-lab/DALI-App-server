@@ -33,6 +33,7 @@ var {VoteLog, VotingEvent, VotingEventOption} = require('./DBRecords/VotingEvent
 
 
 router.post('/create', function (req, res) {
+   console.log(req.body);
    if (req.query.key != process.env.API_KEY) {
       res.status(403).send("Unauthorized request. This method can only be called from the DALI Lab iOS or Android app");
       return;
