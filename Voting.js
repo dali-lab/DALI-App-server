@@ -114,6 +114,7 @@ router.post('/create', function (req, res) {
 * Returns the event object whos start time is before now and end time is after now.
 */
 router.get('/current', function(req, res) {
+   console.log("Getting...");
    if (req.query.key != process.env.API_KEY) {
       res.status(403).send("Unauthorized request. This method can only be called from the DALI Lab iOS or Android app");
       return;
@@ -122,7 +123,7 @@ router.get('/current', function(req, res) {
 
    getCurrentEvent().then((event) => {
       if (event == null) {
-         res.json("No data");
+         res.status(404).json("No data");
          return;
       }
 
