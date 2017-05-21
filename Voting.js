@@ -114,12 +114,10 @@ router.post('/create', function (req, res) {
 * Returns the event object whos start time is before now and end time is after now.
 */
 router.get('/current', function(req, res) {
-   console.log("Getting...");
    if (req.query.key != process.env.API_KEY) {
       res.status(403).send("Unauthorized request. This method can only be called from the DALI Lab iOS or Android app");
       return;
    }
-   console.log("Got here...");
 
    getCurrentEvent().then((event) => {
       if (event == null) {
@@ -198,8 +196,8 @@ function getCurrentEvent() {
 *
 *
 * Scoring:
-* - 1st choice: 3 points
-* - 2nd choice: 2 points
+* - 1st choice: 5 points
+* - 2nd choice: 3 points
 * - 3rd choice: 1 point
 */
 router.post('/submit', function(req, res) {
@@ -260,12 +258,12 @@ router.post('/submit', function(req, res) {
 
          VotingEventOption.findById(first).then((option) => {
             voteLog.first = option;
-            return score(option, 3, first);
+            return score(option, 5, first);
          }).then(() => {
             return VotingEventOption.findById(second);
          }).then((option) => {
             voteLog.second = option;
-            return score(option, 2, second);
+            return score(option, 3, second);
          }).then(() => {
             return VotingEventOption.findById(third);
          }).then((option) => {
