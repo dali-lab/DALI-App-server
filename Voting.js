@@ -382,7 +382,7 @@ router.get('/results/current', function(req, res) {
 
    getCurrentEvent().then((event) => {
       if (event == null) {
-         res.json("No data");
+         res.status(404).send("No data");
          return;
       }
 
