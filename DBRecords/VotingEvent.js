@@ -21,7 +21,7 @@ var VoteLogSchema = new mongoose.Schema({
 var VotingEventOptionSchema = new mongoose.Schema({
    name: String,
    score: Number,
-   award: String
+   awards: [{ type: String }],
 });
 
 // The actual event data object
