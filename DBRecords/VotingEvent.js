@@ -22,6 +22,7 @@ var VotingEventOptionSchema = new mongoose.Schema({
    name: String,
    score: Number,
    awards: [{ type: String }],
+   event: {type: mongoose.Schema.Types.ObjectId, ref: 'VotingEvent' },
 });
 
 // The actual event data object

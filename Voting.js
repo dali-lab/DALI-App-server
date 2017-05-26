@@ -76,40 +76,44 @@ router.post('/create', function (req, res) {
       return;
    }
 
-   //loop through req.body.options and create votingEventOptions objects
-   var optionsSavePromises = [];
-   var votingEventOptions = req.body.options.map((option) => {
-      // For each value in the body.options we will create a corresponding monoose object
-
-      option = new VotingEventOption({
-         name: option,
-         score: 0,
-         awards: null
-      });
-
-      // And remember its save promise so we can save them all later
-      optionsSavePromises.push(option.save());
-      return option;
+   // Create the event
+   var event = new VotingEvent({
+      name: req.body.name,
+      image: req.body.image || defaultImage,
+      description: req.body.description,
+      startTime: startTime,
+      endTime: endTime,
+      resultsReleased: false,
+      options: null,
    });
 
-   // This will .then all the promisses in this array and resolve when they are all done
-   Promise.all(optionsSavePromises).then(() => {
+   event.save().then((event) => {
 
-      // Create the event
-      var event = new VotingEvent({
-         name: req.body.name,
-         image: req.body.image || defaultImage,
-         description: req.body.description,
-         startTime: startTime,
-         endTime: endTime,
-         resultsReleased: false,
-         options: votingEventOptions,
+      //loop through req.body.options and create votingEventOptions objects
+      var optionsSavePromises = [];
+      var votingEventOptions = req.body.options.map((option) => {
+         // For each value in the body.options we will create a corresponding monoose object
+
+         option = new VotingEventOption({
+            name: option,
+            score: 0,
+            awards: null,
+            event: event
+         });
+
+         // And remember its save promise so we can save them all later
+         optionsSavePromises.push(option.save());
+         return option;
       });
 
+      // This will .then all the promisses in this array and resolve when they are all done
+      return Promise.all(optionsSavePromises).then(() => {
+         event.options = votingEventOptions;
+         return event.save();
+      });
+   }).then(() => {
       // And we're done
-      event.save().then((event) => {
-         res.send("Complete");
-      });
+      res.send("Complete");
    }).catch((error) => {
       console.log(error);
       res.status(500).send(error);
@@ -139,6 +143,7 @@ router.get('/current', function(req, res) {
       event.options.forEach((option) => {
          option.score = undefined;
          option.award = undefined;
+         option.event = undefined;
       });
 
       res.json(event);
@@ -357,7 +362,65 @@ router.post('/submit', function(req, res) {
 });
 
 /**
-* Releases the given results
+* Releases the saved results
+*
+* Parameters:
+* {
+*     event: 1, (id)
+* }
+*
+* Functionality:
+*  - Set resultsReleased to be true
+*
+*/
+router.post('/release', function(req, res) {
+   // More security stuffs
+   if (req.query.key != process.env.API_KEY) {
+      res.status(403).send("Unauthorized request. This method can only be called from the DALI Lab iOS or Android app");
+      return;
+   }
+
+   // Input checking
+   if (req.body.event == null || req.body.event == "") {
+      res.status(400).send("Invalid data!");
+      return;
+   }
+
+   const eventID = req.body.event;
+
+   // Get the event
+   VotingEvent.findById(eventID).then((event) => {
+      if (event == null) {
+         res.status(404).send("Failed to find event!");
+         return;
+      }
+
+      // Can't release twice
+      if (event.resultsReleased) {
+         res.status(400).send("Event has already released results");
+         return;
+      }
+      VotingEventOption.find({ award: { $ne: null }, "awards.0": { "$exists": true }, event: event }).then((awardOptions) => {
+         if (awardOptions == null || awardOptions.length != 0) {
+            res.status(400).send("You need at least one winner!");
+            return;
+         }
+
+         // Save release
+         event.resultsReleased = true;
+
+         // And finaly save the event
+         event.save().then(() => {
+            res.send("Complete");
+         }).catch((error) => {
+            res.status(error.code || 500).send(error);
+         });
+      });
+   });
+});
+
+/**
+* Saves the given results
 *
 * Parameters:
 * {
@@ -369,11 +432,10 @@ router.post('/submit', function(req, res) {
 * }
 *
 * Functionality:
-*  - Set resultsReleased to be true
 *  - Set results to be winners
 *
 */
-router.post('/release', function(req, res) {
+router.post('/results/save', function(req, res) {
    // More security stuffs
    if (req.query.key != process.env.API_KEY) {
       res.status(403).send("Unauthorized request. This method can only be called from the DALI Lab iOS or Android app");
@@ -408,9 +470,6 @@ router.post('/release', function(req, res) {
          return;
       }
 
-      // Save release
-      event.resultsReleased = true;
-
       // Get each one and update it with its award
       var promises = [];
       winnersObjs.forEach((winnerObj) => {
@@ -442,9 +501,7 @@ router.post('/release', function(req, res) {
       // Complete them all
       Promise.all(promises).then(() => {
          // And finaly save the event
-         event.save().then(() => {
-            res.send("Complete");
-         });
+         res.send("Complete");
       }).catch((error) => {
          if (error.code == 404) {
             res.status(error.code).send(error.message);
@@ -487,6 +544,7 @@ router.get('/results/current', function(req, res) {
       event.endTime = undefined;
       event.options.forEach((option) => {
          option.award = undefined;
+         option.event = undefined;
       });
 
       res.json(event);
