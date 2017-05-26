@@ -26,8 +26,29 @@ mongoose.connect(process.env.DB_URI);
 //  and not the mongoose type
 mongoose.Promise = global.Promise;
 
+// Do the safety dance!
+app.all('/voting/*', function (req, res, next) {
+   // The following comments describe this function in the context of the movie Mission Impossible
+   // This is an important request! Go secure
+   // Going secure now...
+   if (req.query.key != process.env.API_KEY) {
+      // Failed to go secure
+      if (req.query.key != null && req.query.key.length > 1) {
+         // Your telephone box is probably out of date. We'll send a technician now...
+         res.status(403).send("You app is out of date. Update it to comunicate with the server");
+         return;
+      }
+      // You aren't Tom Cruse! How'd you get this number!
+      res.status(403).send("Unauthorized request. This method can only be called from the DALI Lab iOS or Android app");
+      return;
+   }
+   // Line is secure. Continue...
+   next();
+});
+
 app.use('/location', require('./LocationTracking'));
 app.use('/voting', require('./Voting'));
+
 
 /**
  Check the passed user into any event going on currently

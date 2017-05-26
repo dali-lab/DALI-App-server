@@ -36,15 +36,6 @@ const defaultImage = "https://github.com/dali-lab/Dali-App/raw/vote-order/compon
 * resultsReleased: true
 */
 router.post('/create', function (req, res) {
-   // Go secure!
-   // Switching to a secure line now...
-   if (req.query.key != process.env.API_KEY) {
-      // Failed! You are not the app!
-      res.status(403).send("Unauthorized request. This method can only be called from the DALI Lab iOS or Android app");
-      return;
-   }
-   // Its secure! (Not really :P)
-
    // Check the data
    if (req.body.name == undefined || req.body.name == "" || req.body.description == undefined || req.body.description == "" || req.body.options == undefined || !Array.isArray(req.body.options)) {
       res.status(400).send("Failed. Invalid data!");
@@ -124,12 +115,6 @@ router.post('/create', function (req, res) {
 * Returns the event object whos start time is before now and end time is after now.
 */
 router.get('/current', function(req, res) {
-   // Security! YEAH!
-   if (req.query.key != process.env.API_KEY) {
-      res.status(403).send("Unauthorized request. This method can only be called from the DALI Lab iOS or Android app");
-      return;
-   }
-
    // I wrote a function just for this moment
    getCurrentEvent().then((event) => {
       if (event == null) {
@@ -254,12 +239,6 @@ function getCurrentEvent() {
 */
 const points = [5, 3, 1]
 router.post('/submit', function(req, res) {
-   // Do the safety dance!
-   if (req.query.key != process.env.API_KEY) {
-      res.status(403).send("Unauthorized request. This method can only be called from the DALI Lab iOS or Android app");
-      return;
-   }
-
    const eventID = req.body.event;
    // Check it...
    if (eventID == null || eventID == "") {
@@ -374,12 +353,6 @@ router.post('/submit', function(req, res) {
 *
 */
 router.post('/release', function(req, res) {
-   // More security stuffs
-   if (req.query.key != process.env.API_KEY) {
-      res.status(403).send("Unauthorized request. This method can only be called from the DALI Lab iOS or Android app");
-      return;
-   }
-
    // Input checking
    if (req.body.event == null || req.body.event == "") {
       res.status(400).send("Invalid data!");
@@ -436,12 +409,6 @@ router.post('/release', function(req, res) {
 *
 */
 router.post('/results/save', function(req, res) {
-   // More security stuffs
-   if (req.query.key != process.env.API_KEY) {
-      res.status(403).json("Unauthorized request. This method can only be called from the DALI Lab iOS or Android app");
-      return;
-   }
-
    // Input checking
    if (req.body.event == null || req.body.event == "" || req.body.winners == null || !Array.isArray(req.body.winners)) {
       res.status(400).send("Invalid data!");
@@ -500,11 +467,6 @@ router.post('/results/save', function(req, res) {
 * Returns null if results are already released for the current event
 */
 router.get('/results/current', function(req, res) {
-   // Security
-   if (req.query.key != process.env.API_KEY) {
-      res.status(403).send("Unauthorized request. This method can only be called from the DALI Lab iOS or Android app");
-      return;
-   }
 
    // I already have a handy function, I just need to handle the data differently
    getCurrentEvent().then((event) => {
@@ -538,11 +500,6 @@ router.get('/results/current', function(req, res) {
 * ]
 */
 router.get('/results/final', function(req, res) {
-   if (req.query.key != process.env.API_KEY) {
-      res.status(403).send("Unauthorized request. This method can only be called from the DALI Lab iOS or Android app");
-      return;
-   }
-
    // I use query here so they can include the event they are looking for in their url for the GET like this:
    // https://someserver.com/results/final?event=sa2f32wfi3w8n9naf8q389nas98f34nsd
    var eventID = req.query.id;
