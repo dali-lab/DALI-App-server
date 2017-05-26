@@ -472,12 +472,6 @@ router.post('/results/save', function(req, res) {
          return;
       }
 
-      // Can't release twice
-      if (event.resultsReleased) {
-         res.status(400).send("Event has already released results");
-         return;
-      }
-
       VotingEventOption.find(/*{ event: event }*/).then((options) => {
          var promises = [];
          options.forEach((option) => {
@@ -600,7 +594,7 @@ router.get('/results/final', function(req, res) {
 
                   // Forget about score
                   option.score = undefined;
-                  if (option.awards != null && options.awards.length != 0) {
+                  if (option.awards != null && option.awards.length != 0) {
                      options.push(option);
                   }
                   resolve();
