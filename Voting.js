@@ -438,7 +438,7 @@ router.post('/release', function(req, res) {
 router.post('/results/save', function(req, res) {
    // More security stuffs
    if (req.query.key != process.env.API_KEY) {
-      res.status(403).send("Unauthorized request. This method can only be called from the DALI Lab iOS or Android app");
+      res.status(403).json("Unauthorized request. This method can only be called from the DALI Lab iOS or Android app");
       return;
    }
 
@@ -457,6 +457,14 @@ router.post('/results/save', function(req, res) {
    const eventID = req.body.event;
    const winnersObjs = req.body.winners;
 
+   var awards = {};
+   winnersObjs.forEach((winnerObj) => {
+      if (awards[winnerObj.id] == null) {
+         awards[winnerObj.id] = []
+      }
+      awards[winnerObj.id].push(winnerObj.award);
+   });
+
    // Get the event
    VotingEvent.findById(eventID).then((event) => {
       if (event == null) {
@@ -470,45 +478,17 @@ router.post('/results/save', function(req, res) {
          return;
       }
 
-      // Get each one and update it with its award
-      var promises = [];
-      winnersObjs.forEach((winnerObj) => {
-         promises.push(
-            new Promise(function(resolve, reject) {
-               VotingEventOption.findById(winnerObj.id).then((winner) => {
-                  if (winner == null) {
-                     reject({code: 404, message: "Failed to find opton: " + winnerObj.id});
-                  }
-                  // Each winner can have a number of awards, so we use an array for this
-                  if (winner.awards == null) {
-                     winner.awards = [];
-                  }
-                  if (winner.awards.indexOf(winnerObj.award) == -1) {
-                     // We will add the award only if it is unique
-                     winner.awards.push(winnerObj.award);
-                     winner.save().then(resolve);
-                  }else{
-                     // And otherwise we will ingore it;
-                     resolve();
-                  }
-               }).catch((error) => {
-                  reject({ code: 500, mesage: error });
-               });// End VotingEventOption.findById
-            }) // End Promise
-         ); // End promises.push
-      }); // End forEach
+      VotingEventOption.find(/*{ event: event }*/).then((options) => {
+         var promises = [];
+         options.forEach((option) => {
+            option.awards = awards[option.id];
+            promises.push(option.save());
+         });
 
-      // Complete them all
-      Promise.all(promises).then(() => {
-         // And finaly save the event
-         res.send("Complete");
-      }).catch((error) => {
-         if (error.code == 404) {
-            res.status(error.code).send(error.message);
-         }else{
-            res.status(500).send(error);
-         }
-      })
+         Promise.all(promises).then(() => {
+            res.send("Complete");
+         });
+      });
    });
 });
 
