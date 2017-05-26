@@ -256,7 +256,7 @@ router.post('/submit', function(req, res) {
             let log = logs[i];
             if (log.event == eventID) {
                // This IP address already voted for this event!
-               res.status(403).send("You can only vote once!");
+               res.status(405).send("You can only vote once!");
                return;
             }
          }
