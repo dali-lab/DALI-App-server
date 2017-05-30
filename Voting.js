@@ -111,6 +111,34 @@ router.post('/create', function (req, res) {
    });
 });
 
+router.post('/forcestartnow', function(req, res) {
+   if (req.body.event == null || req.body.event == "") {
+      res.status(400).send("Failed. Invalid data!");
+      return;
+   }
+   
+   VotingEvent.findById(req.body.event).then((event) => {
+      if (event == null) {
+         res.status(404).send("Event not found");
+         return;
+      }
+      
+      event.startTime = new Date();
+      event.endTime.setHours(23, 59, 59);
+      if (event.endTime < event.startTime) {
+         event.endTime = new Date();
+         event.endTime.setHours(23, 59, 59);
+      }
+      
+      event.save().then(() => {
+         res.send("Complete");
+      });
+   }).catch((error) => {
+      console.log(error);
+      res.status(500).send(error);
+   });
+});
+
 /**
 * Returns the event object whos start time is before now and end time is after now.
 */
